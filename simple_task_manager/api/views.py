@@ -6,7 +6,10 @@ from rest_framework import status
 from .serializer import TaskSerializer
 from .models import Task
 
-# Create your views here.
+
+"""
+Remember to run the tests to ensure that the API is working as expected.
+"""
 @api_view(['GET'])
 @authentication_classes([SessionAuthentication, BasicAuthentication])
 @permission_classes([IsAuthenticated])
@@ -21,7 +24,10 @@ def overview(request):
     Returns:
         Response: A DRF Response object containing the serialized task data and a message.
     """
-    
+    """
+    You can use get_or_404() method to get the object or return 404 if it does not exist.
+    But i want to return a message if no tasks are found.
+    """
     try:
         tasks = Task.objects.all()
         serializer = TaskSerializer(tasks, many=True)
