@@ -10,7 +10,23 @@ from .utility import generate_jwt_tokens
 
 
 @api_view(['POST'])
+@permission_classes([AllowAny])  # Only authenticated users can access
 def registeView(request):
+    """
+    Handle user registration.
+    This view handles the registration of a new user. It checks if a user with the provided email
+    already exists. If the user exists, it returns a 400 Bad Request response with an appropriate
+    message. If the user does not exist, it validates the provided data using the UserSerializer.
+    If the data is valid, it saves the new user and returns a 201 Created response with a success
+    message and the user data. If the data is not valid, it returns a 400 Bad Request response with
+    an error message and the validation errors.
+    Args:
+        request (HttpRequest): The HTTP request object containing the user data.
+    Returns:
+        Response: An HTTP response with a status code and a message indicating the result of the
+        registration process.
+    """
+    
     serializer = UserSerializer(data=request.data)
     if User.objects.filter(email=request.data['email']).exists():
         return Response(
@@ -53,6 +69,7 @@ def login(request):
     # Get the user credentials from the request
     email = request.data['email']
     password = request.data['password']
+
     # Authenticate the user
     user = authenticate(request, email=email, password=password)
     # If the user is not authenticated, return an error response
