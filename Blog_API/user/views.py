@@ -2,6 +2,7 @@ from rest_framework.decorators import api_view, authentication_classes, permissi
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.permissions import AllowAny
 from django.contrib.auth import authenticate
 from .serializers import UserSerializer
 from .models import User
@@ -38,11 +39,20 @@ def registeView(request):
 
 
 @api_view(['POST'])
+@permission_classes([AllowAny])  # Only authenticated users can access
 def login(request):
+    """
+    Handle user login by authenticating credentials and generating JWT tokens.
+    Args:
+        request (HttpRequest): The HTTP request object containing user credentials.
+    Returns:
+        Response: A DRF Response object containing a success message and JWT tokens if authentication is successful,
+                  or an error message if authentication fails.
+    """
+    
     # Get the user credentials from the request
     email = request.data['email']
     password = request.data['password']
-
     # Authenticate the user
     user = authenticate(request, email=email, password=password)
     # If the user is not authenticated, return an error response

@@ -18,3 +18,17 @@ def generate_jwt_tokens(user):
     refresh_token = str(refresh)
 
     return access_token, refresh_token
+
+
+def genrate_jwt_access_token(user):
+    """
+    Generate a JWT access token for a given user.
+    Args:
+        user (User): The user instance for which to generate the access token.
+    Returns:
+        str: The generated JWT access token as a string.
+    """
+    
+    refresh = RefreshToken.for_user(user)
+    access_token = str(refresh.access_token)
+    return access_token
