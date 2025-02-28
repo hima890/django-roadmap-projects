@@ -5,7 +5,7 @@ from rest_framework import status
 from django.contrib.auth import authenticate
 from .serializers import UserSerializer
 from .models import User
-
+from .utility import generate_jwt_tokens
 
 
 @api_view(['POST'])
@@ -39,10 +39,13 @@ def registeView(request):
 
 @api_view(['POST'])
 def login(request):
+    # Get the user credentials from the request
     email = request.data['email']
     password = request.data['password']
 
+    # Authenticate the user
     user = authenticate(request, email=email, password=password)
+    # If the user is not authenticated, return an error response
     if not user:
         return Response(
             {
@@ -50,5 +53,14 @@ def login(request):
             },
             status=status.HTTP_400_BAD_REQUEST
         )
-    else:
-        pass
+
+    # Generate JWT tokens for the authenticated user
+    access_token, refresh_token = generate_jwt_tokens(user)
+    return Response(
+        {
+            'message': 'Login successful.',
+            'access_token': access_token,
+            'refresh_token': refresh_token
+        },
+        status=status.HTTP_200_OK
+    )
