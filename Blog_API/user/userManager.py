@@ -16,7 +16,7 @@ class UserManager(BaseUserManager):
         """
         
         # Check for email and password
-        if not email or password:
+        if not email or not password:
             raise ValueError("User must have un email address and password")
 
         # Convetr to lowercase
