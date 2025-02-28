@@ -1,7 +1,7 @@
 from django.contrib.auth.models import BaseUserManager
 
 
-class Usermanager(BaseUserManager):
+class UserManager(BaseUserManager):
     def create_user(self, email, password, **extra_fields):
         """
         Creates and saves a new user with the given email and password.
