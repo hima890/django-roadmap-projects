@@ -1,6 +1,7 @@
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
+from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User
 
 
@@ -57,3 +58,30 @@ class UserLoginTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['message'], 'Login successful.')
         self.assertIn('access_token', response.data)
+
+
+class LogoutViewTests(APITestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(email='testuser@example.com', password='testpassword')
+        self.refresh_token = str(RefreshToken.for_user(self.user))
+        self.access_token = str(RefreshToken.for_user(self.user).access_token)
+        self.logout_url = reverse('logout')  # Ensure you have a URL pattern named 'logout'
+
+    def test_logout_successful(self):
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.access_token)
+        response = self.client.post(self.logout_url, {'refresh_token': self.refresh_token})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['message'], 'Logout successful.')
+
+    def test_logout_no_refresh_token(self):
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.access_token)
+        response = self.client.post(self.logout_url, {})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['message'], 'Refresh token not provided.')
+
+    def test_logout_invalid_refresh_token(self):
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.access_token)
+        response = self.client.post(self.logout_url, {'refresh_token': 'invalidtoken'})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['message'], 'Invalid or expired refresh token.')

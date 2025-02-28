@@ -12,7 +12,7 @@ from .utility import generate_jwt_tokens
 
 
 @api_view(['POST'])
-@permission_classes([AllowAny])  # Only authenticated users can access
+@permission_classes([AllowAny])
 def registeView(request):
     """
     Handle user registration.
