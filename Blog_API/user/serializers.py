@@ -16,8 +16,16 @@ class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=6)
 
     class Meta:
+        # Set the model o the user
         model = User
-        fields = '__all__'
+        # Set the fields to include in the serializer
+        fields = [
+            'id', 'email',
+            'first_name',
+            'last_name', 'password',
+            'is_active', 'is_staff',
+            'last_login'
+        ]
 
     def create(self, validated_data):
         # Use the create user method to hash and set the password then create the user
