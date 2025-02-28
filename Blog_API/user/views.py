@@ -3,6 +3,8 @@ from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import TokenError
 from django.contrib.auth import authenticate
 from .serializers import UserSerializer
 from .models import User
@@ -55,7 +57,7 @@ def registeView(request):
 
 
 @api_view(['POST'])
-@permission_classes([AllowAny])  # Only authenticated users can access
+@permission_classes([AllowAny])
 def login(request):
     """
     Handle user login by authenticating credentials and generating JWT tokens.
@@ -67,8 +69,16 @@ def login(request):
     """
     
     # Get the user credentials from the request
-    email = request.data['email']
-    password = request.data['password']
+    try:
+        email = request.data['email']
+        password = request.data['password']
+    except KeyError:
+        return Response(
+            {
+                'message': 'Email and password are required.'
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
     # Authenticate the user
     user = authenticate(request, email=email, password=password)
@@ -91,3 +101,43 @@ def login(request):
         },
         status=status.HTTP_200_OK
     )
+
+
+@api_view(['POST'])
+def logout(request):
+    """
+    Handle user logout by blacklisting the refresh token.
+    Args:
+        request (HttpRequest): The HTTP request object containing the refresh token.
+    Returns:
+        Response: A DRF Response object containing a success message if the refresh token is blacklisted,
+                  or an error message if the refresh token is invalid or expired.
+    """
+    # The clint should delete the ccess token on the client side
+    # Get the refresh token from the request
+    refresh_token = request.data.get('refresh_token')
+    if not refresh_token:
+        return Response(
+            {
+                'message': 'Refresh token not provided.'
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # Blacklist the refresh token
+    try:
+        token = RefreshToken(refresh_token)
+        token.blacklist()
+        return Response(
+            {
+                'message': 'Logout successful.'
+            },
+            status=status.HTTP_200_OK
+        )
+    except TokenError:
+        return Response(
+            {
+                'message': 'Invalid or expired refresh token.'
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
