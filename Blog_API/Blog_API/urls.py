@@ -22,5 +22,5 @@ urlpatterns = [
     path('api-auth/', include('rest_framework.urls')),
     # Uncomment the following lines to include the blog and user apps
     # path('api/v1/blog/', include('blog.urls')),
-    # path('api/v1/user/', include('user.urls')),
+    path('api/v1/user/', include('user.urls')),
 ]

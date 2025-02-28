@@ -1,8 +1,8 @@
 from rest_framework import serializers
-from .models import user
+from .models import User
 
 
-class userSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     """
     userSerializer is a ModelSerializer for the user model. It includes all fields of the user model and sets the password field to write-only with a minimum length of 6 characters.
     Attributes:
@@ -16,9 +16,9 @@ class userSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=6)
 
     class Meta:
-        model = user
+        model = User
         fields = '__all__'
 
     def create(self, validated_data):
         # Use the create user method to hash and set the password then create the user
-        return user.objects.create_user(**validated_data)
+        return User.objects.create_user(**validated_data)
