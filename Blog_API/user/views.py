@@ -1,8 +1,10 @@
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework import status
-from .models import User
+from django.contrib.auth import authenticate
 from .serializers import UserSerializer
+from .models import User
 
 
 
@@ -20,7 +22,7 @@ def registeView(request):
         serializer.save()
         return Response(
             {
-                'message': 'User created successfully.',\
+                'message': 'User created successfully.',
                 'data': serializer.data
             },
             status=status.HTTP_201_CREATED
@@ -33,3 +35,20 @@ def registeView(request):
             },
             status=status.HTTP_400_BAD_REQUEST
         )
+
+
+@api_view(['POST'])
+def login(request):
+    email = request.data['email']
+    password = request.data['password']
+
+    user = authenticate(request, email=email, password=password)
+    if not user:
+        return Response(
+            {
+                'message': 'Invalid credentials.'
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    else:
+        pass
