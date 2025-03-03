@@ -66,6 +66,17 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,                # If True, blacklists the old refresh token when a new one is issued
 }
 
+# Celery Settings for the background tasks
+# Broker URL for Redis (Celery)
+CELERY_BROKER_URL = env('REDAIS_DATABASE_URL')
+
+# Store Celery task results in Redis (Optional)
+CELERY_RESULT_BACKEND = env('REDAIS_DATABASE_URL')
+
+# Import task modules for the django project app
+CELERY_IMPORTS = ("user.tasks",)
+
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
