@@ -78,11 +78,15 @@ CELERY_RESULT_BACKEND = env('REDAIS_DATABASE_URL')
 # Import task modules for the django project app
 CELERY_IMPORTS = ("user.tasks",)
 
+# Set Celery to use the same time zone as Django
+CELERY_TIMEZONE = 'UTC'
+CELERY_ENABLE_UTC = True
+
 # Schedule the Celery task to delete expired tokens every hour
 CELERY_BEAT_SCHEDULE = {
-    'delete_expired_tokens_every_min': {
-        'task': 'user.tasks.delete_expired_tokens',
-        'schedule': crontab(minute=0, hour='*'),  # Runs at the start of every hour
+    'clean_expired_blacklisted_tokens_every_minute': {
+        'task': 'user.tasks.clean_expired_blacklisted_tokens',
+        'schedule': crontab(minute='*',),  # Runs at the start of every hour
     },
 }
 

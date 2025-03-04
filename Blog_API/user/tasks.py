@@ -3,6 +3,7 @@ from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken
 from django.utils.timezone import now
 
 
+@shared_task
 def clean_expired_blacklisted_tokens():
     """
     Deletes expired blacklisted tokens from the database.
