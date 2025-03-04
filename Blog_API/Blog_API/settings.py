@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import os, environ
 from pathlib import Path
 from datetime import timedelta
+from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -76,6 +77,14 @@ CELERY_RESULT_BACKEND = env('REDAIS_DATABASE_URL')
 
 # Import task modules for the django project app
 CELERY_IMPORTS = ("user.tasks",)
+
+# Schedule the Celery task to delete expired tokens every hour
+CELERY_BEAT_SCHEDULE = {
+    'delete_expired_tokens_every_min': {
+        'task': 'user.tasks.delete_expired_tokens',
+        'schedule': crontab(minute=0, hour='*'),  # Runs at the start of every hour
+    },
+}
 
 
 MIDDLEWARE = [
