@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
+from django.contrib import admin
+from django_celery_beat.models import PeriodicTask, IntervalSchedule
 from .models import User
 
 
@@ -30,4 +32,5 @@ class CustomUserAdmin(UserAdmin):
         ),
     )
 
+# Register the custom user model with the custom admin class
 admin.site.register(User, CustomUserAdmin)

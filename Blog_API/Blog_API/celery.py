@@ -1,3 +1,4 @@
+from __future__ import absolute_import, unicode_literals
 import os
 from celery import Celery
 
@@ -13,3 +14,7 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 
 # Set the autodiscover to True
 app.autodiscover_tasks()
+
+# Import periodic tasks for Celery Beat
+from celery.schedules import crontab
+from celery import shared_task
