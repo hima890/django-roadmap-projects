@@ -10,3 +10,5 @@ static/*
 *.log
 *.swp
 tmp.py
+*.env
+celerybeat-schedule

@@ -9,22 +9,26 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
-
+import os, environ
 from pathlib import Path
 from datetime import timedelta
+from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Read the environment variables from the .env file
+env = environ.Env()
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-ub7@o@i8uxld=kc7%-ggqs=1!$0(8vdkt(w*j^+0uwlhm3p&my'
+SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env.bool('DEBUG', default=True)
 
 ALLOWED_HOSTS = []
 
@@ -41,8 +45,9 @@ INSTALLED_APPS = [
     'blog.apps.BlogConfig',
     'user.apps.UserConfig',
     'rest_framework',
-    "rest_framework_simplejwt",
+    'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
+    'django_celery_beat',
 ]
 
 # Rest Framework Settings using JWT
@@ -59,9 +64,32 @@ REST_FRAMEWORK = {
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),  # Set the access token expiration to 15 minutes
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),     # Set the refresh token expiration to 7 days
-    'ROTATE_REFRESH_TOKENS': False,                   # Whether to rotate refresh tokens
-    'BLACKLIST_AFTER_ROTATION': False,                # If True, blacklists the old refresh token when a new one is issued
+    'ROTATE_REFRESH_TOKENS': True,                   # Whether to rotate refresh tokens
+    'BLACKLIST_AFTER_ROTATION': True,                # If True, blacklists the old refresh token when a new one is issued
 }
+
+# Celery Settings for the background tasks
+# Broker URL for Redis (Celery)
+CELERY_BROKER_URL = env('REDAIS_DATABASE_URL')
+
+# Store Celery task results in Redis (Optional)
+CELERY_RESULT_BACKEND = env('REDAIS_DATABASE_URL')
+
+# Import task modules for the django project app
+CELERY_IMPORTS = ("user.tasks",)
+
+# Set Celery to use the same time zone as Django
+CELERY_TIMEZONE = 'UTC'
+CELERY_ENABLE_UTC = True
+
+# Schedule the Celery task to delete expired tokens every hour
+CELERY_BEAT_SCHEDULE = {
+    'clean_expired_blacklisted_tokens_every_minute': {
+        'task': 'user.tasks.clean_expired_blacklisted_tokens',
+        'schedule': crontab(minute='*',),  # Runs at the start of every hour
+    },
+}
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

@@ -1,0 +1,104 @@
+Create a systemd Service for Celery Worker
+==========================================
+sudo vim /etc/systemd/system/celery.service
+Add the following:
+
+ini
+Copy
+Edit
+[Unit]
+Description=Celery Worker Service
+After=network.target
+
+[Service]
+User=ibrahim-hanafi  # Change this to your username
+Group=www-data  # Adjust group if needed
+WorkingDirectory=/home/ibrahim-hanafi/django_projects/Blog_API  # Path to your project
+ExecStart=/home/ibrahim-hanafi/django_projects/Blog_API/env/bin/celery -A Blog_API worker --loglevel=info
+Restart=always
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
+🔹 What this does:
+
+Runs Celery Worker as a background service
+Restarts automatically if it fails
+Uses the correct virtual environment
+
+save it and prees enter
+
+
+
+Create a systemd Service for Celery Beat
+========================================
+Create /etc/systemd/system/celery-beat.service:
+
+bash
+Copy
+Edit
+sudo nano /etc/systemd/system/celery-beat.service
+Add this:
+
+ini
+Copy
+Edit
+[Unit]
+Description=Celery Beat Service
+After=network.target
+
+[Service]
+User=ibrahim-hanafi
+Group=www-data
+WorkingDirectory=/home/ibrahim-hanafi/django_projects/Blog_API
+ExecStart=/home/ibrahim-hanafi/django_projects/Blog_APIe/nv/bin/celery -A Blog_API beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+Restart=always
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
+🔹 What this does:
+
+Runs Celery Beat in the background
+Uses django-celery-beat for dynamic task scheduling
+Restarts on failure
+Save (CTRL+X, then Y, then Enter).
+
+🔹 Step 3: Enable & Start Services
+Run these commands to enable the services to start at boot:
+
+bash
+Copy
+Edit
+sudo systemctl daemon-reload
+sudo systemctl enable celery
+sudo systemctl enable celery-beat
+Start the services:
+
+bash
+Copy
+Edit
+sudo systemctl start celery
+sudo systemctl start celery-beat
+Check status:
+
+bash
+Copy
+Edit
+sudo systemctl status celery
+sudo systemctl status celery-beat
+If both are running, Celery is now properly managed by systemd! 🎉
+
+🔹 Step 4: View Logs Easily
+To see Celery logs at any time:
+
+bash
+Copy
+Edit
+journalctl -u celery -f
+For Celery Beat logs:
+
+bash
+Copy
+Edit
+journalctl -u celery-beat -f
