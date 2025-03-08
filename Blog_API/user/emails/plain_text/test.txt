@@ -1,0 +1,8 @@
+Hello {username},
+
+Thank you for signing up for our blog platform! We are excited to have you on board.
+
+If you have any questions or need assistance, feel free to reach out to our support team at {support_email}.
+
+Best regards,
+The Blog Team
