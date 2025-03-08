@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from .tasks import send_email_task
 
 
-@receiver(post_save, User)
+@receiver(post_save, sender=User)
 def send_welcome_email(sender, instance, created, **kwargs):
     """
     Sends a welcome email to a new user upon creation.
