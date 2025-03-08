@@ -50,18 +50,18 @@ def send_email_with_attachments(subject, template_name, context, recipient_list,
     Returns:
         str: A success message if the email is sent successfully, otherwise an error message.
     """
-
+    # The html and the txt file should have the same name
     try:
         # Load HTML template
         html_content = render_to_string(
-            "email_templates/{}.html".format(template_name),
+            "email/templates/{}.html".format(template_name),
             context
         )
 
         # Load plain text template
         txt_template_path = os.path.join(
             settings.BASE_DIR,
-            "myapp/email_templates/{}.txt".format(template_name)
+            "email/plain_text/{}.txt".format(template_name)
         )
         with open(txt_template_path, "r", encoding="utf-8") as file:
             plain_text_content = file.read().format(**context)  # Replace placeholders with context values
