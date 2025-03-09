@@ -30,3 +30,23 @@ class UserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         # Use the create user method to hash and set the password then create the user
         return User.objects.create_user(**validated_data)
+
+
+class UserUpdateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for updating user information.
+    This serializer allows updating the user's first name, last name, and profile picture.
+    The profile picture field is optional.
+    Attributes:
+        profile_picture (serializers.ImageField): Optional field for uploading a profile picture.
+    Meta:
+        model (User): The model that this serializer is based on.
+        fields (list): List of fields to be included in the serialization. 
+                       It includes 'first_name', 'last_name', and 'profile_picture'.
+    """
+
+    profile_picture = serializers.ImageField(required=False)  # Optional field for uploads
+
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'profile_picture']  # Exclude email & password

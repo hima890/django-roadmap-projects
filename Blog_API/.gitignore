@@ -12,3 +12,4 @@ static/*
 tmp.py
 *.env
 celerybeat-schedule
+media/

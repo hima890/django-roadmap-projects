@@ -2,11 +2,11 @@ from rest_framework.decorators import api_view, authentication_classes, permissi
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 from django.contrib.auth import authenticate
-from .serializers import UserSerializer
+from .serializers import UserSerializer, UserUpdateSerializer
 from .models import User
 from .utility import generate_jwt_tokens
 
@@ -141,3 +141,42 @@ def logout(request):
             },
             status=status.HTTP_400_BAD_REQUEST
         )
+
+
+@api_view(['PUT', 'GET'])
+@permission_classes([IsAuthenticated])
+def updateUserProfile(request):
+    """
+    Handle user profile updates.
+    This view function handles GET and PUT requests for updating user profiles.
+    GET:
+        - Returns the current user's profile data.
+    PUT:
+        - Updates the user's profile with the provided data.
+        - If 'profile_picture' is included in the request files, it updates the user's profile picture.
+        - Returns a success message and the updated profile data if the update is successful.
+        - Returns validation errors if the update fails.
+    Args:
+        request (HttpRequest): The HTTP request object containing user data and method type.
+    Returns:
+        Response: A DRF Response object containing the serialized user data or error messages.
+    """
+
+    user = request.user
+    if  request.method == 'GET':
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
+    elif request.method == 'PUT':
+        serializer = UserUpdateSerializer(user, data=request.data)
+        if serializer.is_valid():
+           if 'profile_picture' in request.FILES:
+                user.profile_picture = request.FILES['profile_picture']  # Save the image
+                serializer.save()
+                return Response(
+                    {
+                        "message": "Profile updated successfully",
+                        "data": serializer.data
+                    },
+                    status=200
+                )
+        return Response(serializer.errors, status=400)
