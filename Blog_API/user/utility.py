@@ -53,16 +53,12 @@ def send_email_with_attachments(subject, template_name, context, recipient_list,
     # The html and the txt file should have the same name
     try:
         # Load HTML template
-        html_content = render_to_string(
-            "email/templates/{}.html".format(template_name),
-            context
-        )
+        emails_dir = os.path.join(settings.BASE_DIR, "user/emails")
+        html_template_path = os.path.join(emails_dir, "templates", "{}.html".format(template_name))
+        html_content = render_to_string(html_template_path, context)
 
         # Load plain text template
-        txt_template_path = os.path.join(
-            settings.BASE_DIR,
-            "email/plain_text/{}.txt".format(template_name)
-        )
+        txt_template_path = os.path.join(emails_dir, "plain_text", "{}.txt".format(template_name))
         with open(txt_template_path, "r", encoding="utf-8") as file:
             plain_text_content = file.read().format(**context)  # Replace placeholders with context values
 

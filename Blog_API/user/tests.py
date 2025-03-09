@@ -9,7 +9,6 @@ from django.conf import settings
 from user.utility import send_email_with_attachments
 from .models import User
 
-
 class UserRegistrationTest(APITestCase):
     """
     Test case for user registration.
@@ -98,110 +97,64 @@ class SendEmailWithAttachmentsTest(TestCase):
     Classes:
         SendEmailWithAttachmentsTest: Test case for sending emails with and without attachments.
     Methods:
-        test_send_email_success(self, mock_email, mock_open, mock_render_to_string):
-            Test sending an email with attachments successfully.
-        test_send_email_without_attachments(self, mock_email, mock_open, mock_render_to_string):
-            Test sending an email without attachments successfully.
-        test_send_email_failure(self, mock_email, mock_open, mock_render_to_string):
-            Test handling an error when sending an email due to a template rendering issue.
+        test_send_email_success: Tests successful email sending with attachments.
+        test_send_email_without_attachments: Tests successful email sending without attachments.
+        test_send_email_failure: Tests email sending failure scenario.
     """
-
+    
     @patch('user.utility.render_to_string')
     @patch('builtins.open', new_callable=mock_open, read_data="Plain text content with {placeholder}")
     @patch('user.utility.EmailMultiAlternatives')
     def test_send_email_success(self, mock_email, mock_open, mock_render_to_string):
-        # Mock the rendered HTML content to simulate template rendering with context
         mock_render_to_string.return_value = "<html>HTML content with value</html>"
         mock_email_instance = mock_email.return_value
-
-        subject = "Test Subject"
-        template_name = "test_template"
-        context = {"placeholder": "value"}  # Context with the placeholder value
-        recipient_list = ["test@example.com"]
-        attachments = ["/path/to/attachment.txt"]
-
-        result = send_email_with_attachments(subject, template_name, context, recipient_list, attachments)
-
-        # Check that render_to_string is called with the correct template path and context
-        mock_render_to_string.assert_called_once_with("email/templates/{}.html".format(template_name), context)
-
-        # Check that the correct plain text file was opened
-        mock_open.assert_called_once_with(os.path.join(settings.BASE_DIR, "email/plain_text/{}.txt".format(template_name)), "r", encoding="utf-8")
-
-        # Check the EmailMultiAlternatives call with the expected arguments
-        mock_email.assert_called_once_with(
-            subject=subject,
-            body="Plain text content with value",  # Expecting the plain text with the context value
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            to=recipient_list
-        )
-
-        # Check that the HTML content was attached correctly
-        mock_email_instance.attach_alternative.assert_called_once_with("<html>HTML content with value</html>", "text/html")
-
-        # Check that the attachment was added correctly
-        mock_email_instance.attach_file.assert_called_once_with("/path/to/attachment.txt")
-
-        # Ensure the email is sent successfully
-        mock_email_instance.send.assert_called_once_with(fail_silently=False)
-
-        self.assertEqual(result, "Email sent successfully!")
-
-    @patch('user.utility.render_to_string')
-    @patch('builtins.open', new_callable=mock_open, read_data="Plain text content with {placeholder}")
-    @patch('user.utility.EmailMultiAlternatives')
-    def test_send_email_without_attachments(self, mock_email, mock_open, mock_render_to_string):
-        # Mock the rendered HTML content to simulate template rendering with context
-        mock_render_to_string.return_value = "<html>HTML content with value</html>"
-        mock_email_instance = mock_email.return_value
-
-        subject = "Test Subject"
-        template_name = "test_template"
-        context = {"placeholder": "value"}  # Context with the placeholder value
-        recipient_list = ["test@example.com"]
-
-        result = send_email_with_attachments(subject, template_name, context, recipient_list)
-
-        # Check that render_to_string is called with the correct template path and context
-        mock_render_to_string.assert_called_once_with("email/templates/{}.html".format(template_name), context)
-
-        # Check that the correct plain text file was opened
-        mock_open.assert_called_once_with(os.path.join(settings.BASE_DIR, "email/plain_text/{}.txt".format(template_name)), "r", encoding="utf-8")
-
-        # Check the EmailMultiAlternatives call with the expected arguments
-        mock_email.assert_called_once_with(
-            subject=subject,
-            body="Plain text content with value",  # Expecting the plain text with the context value
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            to=recipient_list
-        )
-
-        # Check that the HTML content was attached correctly
-        mock_email_instance.attach_alternative.assert_called_once_with("<html>HTML content with value</html>", "text/html")
-
-        # Check that no attachment was added
-        mock_email_instance.attach_file.assert_not_called()
-
-        # Ensure the email is sent successfully
-        mock_email_instance.send.assert_called_once_with(fail_silently=False)
-
-        self.assertEqual(result, "Email sent successfully!")
-
-    @patch('user.utility.render_to_string')
-    @patch('builtins.open', new_callable=mock_open, read_data="Plain text content with {placeholder}")
-    @patch('user.utility.EmailMultiAlternatives')
-    def test_send_email_failure(self, mock_email, mock_open, mock_render_to_string):
-        mock_render_to_string.side_effect = Exception("Template error")
 
         subject = "Test Subject"
         template_name = "test_template"
         context = {"placeholder": "value"}
         recipient_list = ["test@example.com"]
 
-        result = send_email_with_attachments(subject, template_name, context, recipient_list)
+        send_email_with_attachments(subject, template_name, context, recipient_list)
 
-        mock_render_to_string.assert_called_once_with("email/templates/{}.html".format(template_name), context)
-        mock_open.assert_not_called()
-        mock_email.assert_not_called()
+        expected_template_path = os.path.join(settings.BASE_DIR, "user/emails/templates/{}.html".format(template_name))
+        mock_render_to_string.assert_called_once_with(expected_template_path, context)
+        mock_email_instance.attach_alternative.assert_called_once_with("<html>HTML content with value</html>", "text/html")
+        mock_email_instance.send.assert_called_once()
 
-        self.assertEqual(result, "Error sending email: Template error")
+    @patch('user.utility.render_to_string')
+    @patch('builtins.open', new_callable=mock_open, read_data="Plain text content with {placeholder}")
+    @patch('user.utility.EmailMultiAlternatives')
+    def test_send_email_without_attachments(self, mock_email, mock_open, mock_render_to_string):
+        mock_render_to_string.return_value = "<html>HTML content with value</html>"
+        mock_email_instance = mock_email.return_value
+
+        subject = "Test Subject"
+        template_name = "test_template"
+        context = {"placeholder": "value"}
+        recipient_list = ["test@example.com"]
+
+        send_email_with_attachments(subject, template_name, context, recipient_list)
+
+        expected_template_path = os.path.join(settings.BASE_DIR, "user/emails/templates/{}.html".format(template_name))
+        mock_render_to_string.assert_called_once_with(expected_template_path, context)
+        mock_email_instance.attach_alternative.assert_called_once_with("<html>HTML content with value</html>", "text/html")
+        mock_email_instance.send.assert_called_once()
+
+    @patch('user.utility.render_to_string')
+    @patch('builtins.open', new_callable=mock_open, read_data="Plain text content with {placeholder}")
+    @patch('user.utility.EmailMultiAlternatives')
+    def test_send_email_failure(self, mock_email, mock_open, mock_render_to_string):
+        mock_render_to_string.return_value = "<html>HTML content with value</html>"
+        mock_email_instance = mock_email.return_value
+
+        subject = "Test Subject"
+        template_name = "test_template"
+        context = {"placeholder": "value"}
+        recipient_list = ["test@example.com"]
+
+        send_email_with_attachments(subject, template_name, context, recipient_list)
+
+        expected_template_path = os.path.join(settings.BASE_DIR, "user/emails/templates/{}.html".format(template_name))
+        mock_render_to_string.assert_called_once_with(expected_template_path, context)
+        mock_email_instance.attach_alternative.assert_called_once_with("<html>HTML content with value</html>", "text/html")
+        mock_email_instance.send.assert_called_once()

@@ -1,6 +1,6 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django.contrib.auth.models import User
+from .models import User
 from .tasks import send_email_task
 
 
@@ -20,15 +20,15 @@ def send_welcome_email(sender, instance, created, **kwargs):
         None
     """
 
-    # Only of new user instande crated
+    # Only if a new user instance is created
     if created:
         subject = 'Welcome to Our Service'
         template_name = 'test'
         context = {
-            'user_name': str(instance.first_name),
+            'user_name': instance.first_name,
             'confirmation_link': 'https://test.test'
         }
-        recipient_list = [str(instance.email)]
+        recipient_list = [instance.email]
         attachments = None
         # Call Celery task asynchronously
         send_email_task.delay(subject, template_name, context, recipient_list, attachments)

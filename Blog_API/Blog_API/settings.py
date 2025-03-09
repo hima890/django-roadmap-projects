@@ -28,7 +28,7 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env.bool('DEBUG', default=True)
+DEBUG = True
 
 # Email configuration using environment variables
 EMAIL_BACKEND = env('EMAIL_BACKEND')
@@ -41,11 +41,8 @@ EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL')
 EMAIL_SUBJECT_PREFIX = env('EMAIL_SUBJECT_PREFIX')
 EMAIL_TIMEOUT = env.int('EMAIL_TIMEOUT')
-if DEBUG:
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-else:
-    EMAIL_BACKEND = env('EMAIL_BACKEND')
 
+# Email configuration for the Celery background tasks
 ALLOWED_HOSTS = []
 
 
@@ -122,7 +119,9 @@ ROOT_URLCONF = 'Blog_API.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            os.path.join(BASE_DIR, 'user/emails/templates'),
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
