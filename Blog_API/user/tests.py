@@ -3,6 +3,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.test import APIClient
 from unittest.mock import patch, mock_open
 from django.test import TestCase
 from django.conf import settings
@@ -65,6 +66,21 @@ class UserLoginTest(APITestCase):
 
 
 class LogoutViewTests(APITestCase):
+    """
+    Tests for the LogoutView.
+    This test case includes the following tests:
+    - test_logout_successful: Ensures that a user can successfully log out with a valid refresh token.
+    - test_logout_no_refresh_token: Ensures that the logout fails if no refresh token is provided.
+    - test_logout_invalid_refresh_token: Ensures that the logout fails if an invalid or expired refresh token is provided.
+    Setup:
+    - Creates a test user.
+    - Generates a refresh token and an access token for the test user.
+    - Defines the logout URL.
+    Tests:
+    - test_logout_successful: Sends a POST request to the logout URL with a valid refresh token and checks for a 200 OK response and a success message.
+    - test_logout_no_refresh_token: Sends a POST request to the logout URL without a refresh token and checks for a 400 Bad Request response and an error message.
+    - test_logout_invalid_refresh_token: Sends a POST request to the logout URL with an invalid refresh token and checks for a 400 Bad Request response and an error message.
+    """
 
     def setUp(self):
         self.user = User.objects.create_user(email='testuser@example.com', password='testpassword')
@@ -158,3 +174,56 @@ class SendEmailWithAttachmentsTest(TestCase):
         mock_render_to_string.assert_called_once_with(expected_template_path, context)
         mock_email_instance.attach_alternative.assert_called_once_with("<html>HTML content with value</html>", "text/html")
         mock_email_instance.send.assert_called_once()
+
+
+class UpdateUserProfileTests(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            email='testuser@example.com',
+            password='testpassword',
+            first_name='Test',
+            last_name='User'
+        )
+        self.client.force_authenticate(user=self.user)
+        self.url = reverse('update_user_profile')
+
+    def test_get_user_profile(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['email'], self.user.email)
+        self.assertEqual(response.data['first_name'], self.user.first_name)
+        self.assertEqual(response.data['last_name'], self.user.last_name)
+
+    def test_update_user_profile(self):
+        data = {
+            'first_name': 'Updated',
+            'last_name': 'User'
+        }
+        response = self.client.put(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.first_name, 'Updated')
+        self.assertEqual(self.user.last_name, 'User')
+
+    def test_update_user_profile_with_invalid_data(self):
+        data = {
+            'email': 'invalid-email'
+        }
+        response = self.client.put(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('email', response.data)
+
+    def test_update_user_profile_with_profile_picture(self):
+        with open('path/to/your/test/image.jpg', 'rb') as image:
+            data = {
+                'first_name': 'Updated',
+                'last_name': 'User',
+                'profile_picture': image
+            }
+            response = self.client.put(self.url, data, format='multipart')
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.user.refresh_from_db()
+            self.assertEqual(self.user.first_name, 'Updated')
+            self.assertEqual(self.user.last_name, 'User')
+            self.assertTrue(self.user.profile_picture)

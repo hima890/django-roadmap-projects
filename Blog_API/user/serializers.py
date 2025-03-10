@@ -1,3 +1,4 @@
+import os
 from rest_framework import serializers
 from .models import User
 
@@ -36,17 +37,45 @@ class UserUpdateSerializer(serializers.ModelSerializer):
     """
     Serializer for updating user information.
     This serializer allows updating the user's first name, last name, and profile picture.
-    The profile picture field is optional.
+    The profile picture is an optional field and must be an image file with one of the
+    following extensions: jpg, jpeg, png. The maximum allowed size for the profile picture
+    is 5MB.
     Attributes:
         profile_picture (serializers.ImageField): Optional field for uploading a profile picture.
     Meta:
-        model (User): The model that this serializer is based on.
-        fields (list): List of fields to be included in the serialization. 
-                       It includes 'first_name', 'last_name', and 'profile_picture'.
+        model (User): The model associated with this serializer.
+        fields (list): List of fields to be included in the serializer. Excludes email and password.
+    Methods:
+        validate_profile_image(image):
+            Validates the profile image to ensure it has an allowed extension and does not exceed
+            the maximum size limit.
+            Args:
+                image (File): The image file to be validated.
+            Raises:
+                serializers.ValidationError: If the image has an unsupported extension or exceeds
+                the maximum size limit.
+            Returns:
+                File: The validated image file.
     """
-
+    
     profile_picture = serializers.ImageField(required=False)  # Optional field for uploads
 
     class Meta:
         model = User
         fields = ['first_name', 'last_name', 'profile_picture']  # Exclude email & password
+
+    def  validate_profile_image(self, image):
+        allowed_image_extensions = ['jpg', 'jpeg', 'png']
+        allowed_image_size = 5 * 1024 * 1024 # 5MB
+
+        image_extensions = os.path.splitext(image.name)[1][1:].lower()
+        if image_extensions not in allowed_image_extensions:
+            raise serializers.ValidationError(
+                'Unsupported file extension. Supported extensions are jpg, jpeg, and png.'
+            )
+
+        if image.size > allowed_image_size:
+            raise serializers.ValidationError(
+                'The image size is too large. The maximum image size is 5MB.'
+            )
+        return image

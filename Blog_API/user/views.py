@@ -179,4 +179,10 @@ def updateUserProfile(request):
                     },
                     status=200
                 )
-        return Response(serializer.errors, status=400)
+        return Response(
+            {
+                "message": "Profile update failed",
+                "errors": serializer.errors
+            },
+            status=400
+        )
