@@ -62,14 +62,15 @@ class UserUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'profile_picture']  # Exclude email & password
+        fields = ['first_name', 'last_name', 'bio', 'profile_picture', 'social_links']  # Exclude email & password
 
-    def  validate_profile_image(self, image):
+
+    def  validate_profile_picture(self, image):
         allowed_image_extensions = ['jpg', 'jpeg', 'png']
         allowed_image_size = 5 * 1024 * 1024 # 5MB
 
-        image_extensions = os.path.splitext(image.name)[1][1:].lower()
-        if image_extensions not in allowed_image_extensions:
+        image_extension = os.path.splitext(image.name)[1][1:].lower()
+        if image_extension not in allowed_image_extensions:
             raise serializers.ValidationError(
                 'Unsupported file extension. Supported extensions are jpg, jpeg, and png.'
             )

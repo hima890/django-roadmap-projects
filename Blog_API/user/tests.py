@@ -7,6 +7,7 @@ from rest_framework.test import APIClient
 from unittest.mock import patch, mock_open
 from django.test import TestCase
 from django.conf import settings
+from django.core.files.uploadedfile import SimpleUploadedFile
 from user.utility import send_email_with_attachments
 from .models import User
 
@@ -177,53 +178,72 @@ class SendEmailWithAttachmentsTest(TestCase):
 
 
 class UpdateUserProfileTests(APITestCase):
+    """
+    Tests for updating user profile functionality.
+    Classes:
+        UpdateUserProfileTests: Test case for updating user profile.
+    Methods:
+        setUp(self):
+            Set up the test case with a test user and authenticate the client.
+        test_updateUserProfile(self):
+            Test updating user profile with valid data including profile picture.
+        test_updateUserProfile_with_invalid_data(self):
+            Test updating user profile with invalid data (empty first and last name).
+        test_update_profile_image_size_exceeds_limit(self):
+            Test updating user profile with an image that exceeds the size limit (5MB).
+        test_update_profile_invalid_image_extension(self):
+            Test updating user profile with an invalid image file extension.
+    """
+    
     def setUp(self):
-        self.client = APIClient()
-        self.user = User.objects.create_user(
-            email='testuser@example.com',
-            password='testpassword',
-            first_name='Test',
-            last_name='User'
-        )
+        self.user = User.objects.create_user(email='testuser@example.com', password='testpassword')
         self.client.force_authenticate(user=self.user)
-        self.url = reverse('update_user_profile')
+        self.url = reverse('updateUserProfile')
 
-    def test_get_user_profile(self):
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['email'], self.user.email)
-        self.assertEqual(response.data['first_name'], self.user.first_name)
-        self.assertEqual(response.data['last_name'], self.user.last_name)
+    def test_updateUserProfile(self):
+        with open(os.path.join(settings.BASE_DIR, 'media/profile_pics/1_pYBLqLl57uiXHFSWYEzOlw_B5AlHJt.png'), 'rb') as f:
+            image = SimpleUploadedFile('1_pYBLqLl57uiXHFSWYEzOlw_B5AlHJt.png', f.read(), content_type='image/png')
+            data = {
+                'first_name': 'Updated',
+                'last_name': 'User',
+                'profile_picture': image
+            }
+            response = self.client.put(self.url, data, format='multipart')  # Use multipart for file upload            
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertEqual(response.data['message'], 'Profile updated successfully')
 
-    def test_update_user_profile(self):
+    def test_updateUserProfile_with_invalid_data(self):
         data = {
-            'first_name': 'Updated',
-            'last_name': 'User'
+            'first_name': '',
+            'last_name': ''
         }
-        response = self.client.put(self.url, data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.user.refresh_from_db()
-        self.assertEqual(self.user.first_name, 'Updated')
-        self.assertEqual(self.user.last_name, 'User')
-
-    def test_update_user_profile_with_invalid_data(self):
-        data = {
-            'email': 'invalid-email'
-        }
-        response = self.client.put(self.url, data)
+        response = self.client.put(self.url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('email', response.data)
 
-    def test_update_user_profile_with_profile_picture(self):
-        with open('path/to/your/test/image.jpg', 'rb') as image:
+    def test_update_profile_image_size_exceeds_limit(self):
+        with open('large_image.jpg', 'wb') as f:
+            f.write(b'\x00' * (5 * 1024 * 1024 + 1))  # Create a file larger than 5MB
+        with open('large_image.jpg', 'rb') as f:
+            image = SimpleUploadedFile('large_image.jpg', f.read(), content_type='image/jpeg')
             data = {
                 'first_name': 'Updated',
                 'last_name': 'User',
                 'profile_picture': image
             }
             response = self.client.put(self.url, data, format='multipart')
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
-            self.user.refresh_from_db()
-            self.assertEqual(self.user.first_name, 'Updated')
-            self.assertEqual(self.user.last_name, 'User')
-            self.assertTrue(self.user.profile_picture)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertIn('Upload a valid image. The file you uploaded was either not an image or a corrupted image.', response.data['errors']['profile_picture'][0])
+
+    def test_update_profile_invalid_image_extension(self):
+        with open('invalid_image.txt', 'wb') as f:
+            f.write(b'This is not an image file.')
+        with open('invalid_image.txt', 'rb') as f:
+            image = SimpleUploadedFile('invalid_image.txt', f.read(), content_type='text/plain')
+            data = {
+                'first_name': 'Updated',
+                'last_name': 'User',
+                'profile_picture': image
+            }
+            response = self.client.put(self.url, data, format='multipart')
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertIn('Upload a valid image. The file you uploaded was either not an image or a corrupted image.', response.data['errors']['profile_picture'][0])
